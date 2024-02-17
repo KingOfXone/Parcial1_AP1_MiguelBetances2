@@ -1,0 +1,116 @@
+﻿    @page "/Detail"
+    @page "/Detail/{MetasId:int}"
+    @inject MetasService metasService
+    @inject NavigationManager navigationManager
+    @inject IJSRuntime jsRuntime
+    @rendermode InteractiveServer
+
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="text-center">Detalle de Metas</h3>
+        <div class="row">
+
+            <div class="input-group">
+                <div class="col-lg-4">
+                    <label for="fechaDesde">Desde:</label>
+                    <input class="form-control form-control-sm" type="date" @bind="Desde" />
+                </div>
+                <div class="col-1"></div>
+                <div class="col-lg-4">
+                    <label for="fechaHasta">Hasta:</label>
+                    <input class="form-control form-control-sm" type="date" @bind="Hasta" />
+                </div>
+                <div class="col-1"></div>
+                <div class="col-lg-2">
+                    <button type="button" class="btn btn-primary btn-sm mt-4" @onclick="Buscar">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-fooer">
+        <div class="table-responsive mt-3">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr bgcolor="#C5F1E8">
+                        <th>Meta Id</th>
+                        <th>Fecha</th>
+                        <th>Descripci&oacute;n</th>
+                        <th>Monto</th>
+                        <th>Editar</th>
+                        <th>Eliminar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var meta in MetasList)
+                    {
+                        <tr>
+                            <td>@meta.MetasId</td>
+                            <td>@meta.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td>@meta.Descripcion</td>
+                            <td>@meta.Monto</td>
+
+                            <td>
+                                <a href="/Edit/@meta.MetasId">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="/Delete/@meta.MetasId" class="link-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    <tr>
+                        <td>Total: @Contador</td>
+                        <td></td>
+                        <td></td>
+                        <td>@MontoTotal</td>
+                        <td></td>
+                        <td></td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="padding-left: 500px; padding-bottom: 10px;">
+            <a href="create" class="btn btn-primary btn-sm mt-4">
+                <i class="bi bi-plus-square"></i> Nueva Meta
+            </a>
+        </div>
+    </div>
+</div>
+@code {
+    [Parameter]
+    public int MetasId { get; set; }
+    public Metas Aporte { get; set; } = new Metas();
+    public DateTime? Desde { get; set; }
+    public DateTime? Hasta { get; set; }
+    public List<Metas> MetasList { get; set; } = new List<Metas>();
+    public int Contador { get; set; }
+    public decimal MontoTotal { get; set; }
+
+
+    protected override void OnInitialized()
+    {
+        Desde = DateTime.Now.AddMonths(-1);
+        Hasta = DateTime.Now;
+        Buscar();
+    }
+
+    public void Buscar()
+    {
+        Hasta = new DateTime(Hasta.Value.Year, Hasta.Value.Month, Hasta.Value.Day, 23, 59, 59);
+        MetasList = metasService.Listar(ap => ap.Fecha >= Desde && ap.Fecha <= Hasta);
+        Contador = MetasList.Count();
+        MontoTotal = MetasList.Sum(ap => ap.Monto);
+    }
+
+    public void Nuevo()
+    {
+        MetasList = metasService.Listar(al => true);
+    }
+}
