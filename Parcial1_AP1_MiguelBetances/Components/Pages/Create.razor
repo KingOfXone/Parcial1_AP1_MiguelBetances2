@@ -1,0 +1,137 @@
+﻿@page "/Create"
+@page "/Create/{MetasId:int}"
+@inject MetasService metasService
+@inject NavigationManager navigationManager
+@inject IJSRuntime jsRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Registro de Metas</PageTitle>
+<EditForm Model="metas" OnValidSubmit="Guardar" FormName="metaForm">
+    <DataAnnotationsValidator />
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header">
+                <h3>Crear Meta</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-4 col-xl-3">
+                        <label for="MetasId">Meta Id</label>
+                        <div class="input-group">
+                            <InputNumber @bind-Value="metas.MetasId" class="form-control" aria-describedby="BotonBuscar" />
+                            <button class="btn btn-primary" type="button" @onclick="Buscar">
+                                <span> <i class="bi bi-search"></i></span>
+                            </button>
+                        </div>
+                        @if (Encontro)
+                        {
+                            <div class="alert alert-warning" role="alert">
+                                Meta no encontrada
+                            </div>
+                        }
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-4 col-xl-3">
+                        <label class="form-label" for="Fecha">Fecha:</label>
+                        <InputDate @bind-Value="metas.Fecha" class="form-control" format="yyyy-MM-dd" />
+                        <ValidationMessage For="@(() => metas.Fecha)" />
+                    </div>
+                </div>
+
+
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label" for="Descripci&oacuten">Descripci&oacute;n:</label>
+                        <InputText @bind-Value="metas.Descripcion" class="form-control" />
+                        <ValidationMessage For="@(() => metas.Descripcion)" />
+                    </div>
+                    @if (Existe)
+                    {
+                        <div class="col-md-6">
+                            <div class="alert alert-danger" role="alert">
+                                Ya existe una meta con esa Descripción
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label" for="Monto">Monto:</label>
+                        <InputNumber @bind-Value="metas.Monto" class="form-control" />
+                        <ValidationMessage For="@(() => metas.Monto)" />
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">
+                    <span>Crear <i class="bi bi-file-earmark" /></span>
+                </button>
+                <a href="/Detail" class="btn btn-secondary">
+                    <span>Volver<i class="bi bi-arrow-return-left"></i></span>
+                </a>
+            </div>
+            @if (Guardo)
+            {
+                <div class="row">
+                    <div class="col-md-12">
+                        <p class="text-success">Guardado con éxito</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? MetasId { get; set; }
+    public Metas metas { get; set; } = new Metas();
+    public bool Existe { get; set; } = false;
+    public bool Guardo { get; set; } = false;
+    public bool Encontro { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (MetasId.HasValue)
+        {
+            var encontrado = await metasService.Buscar(MetasId.Value);
+            if (encontrado != null)
+                metas = encontrado;
+        }
+
+        metas.Fecha = DateTime.Now.Date;
+    }
+
+    public async Task Buscar()
+    {
+        var encontrado = await metasService.Buscar(metas.MetasId);
+        if (encontrado != null)
+            metas = encontrado;
+
+        else if (Encontro == null)
+            Encontro = true;
+    }
+
+    public async Task Guardar()
+    {
+        if (Validar())
+            return;
+
+        await metasService.Guardar(metas);
+        Guardo = true;
+        navigationManager.NavigateTo("/Detail");
+        Nuevo();
+    }
+    public void Nuevo()
+    {
+        metas = new Metas();
+        metas.Fecha = DateTime.Now.Date;
+    }
+
+    public bool Validar()
+    {
+        Existe = metasService.Listar(ap => ap.Descripcion!.ToLower() == metas.Descripcion!.ToLower() && ap.MetasId != metas.MetasId).Any();
+        return Existe;
+    }
+}
