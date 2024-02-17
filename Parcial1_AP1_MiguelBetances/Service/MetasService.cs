@@ -9,62 +9,66 @@ namespace Parcial1_AP1_MiguelBetances.Service
 {
     public class MetasService
     {
-            private readonly Context _context;
+        private readonly Context _contexto;
 
-            public MetasService(Context context)
-            {
-                _context = context;
-            }
+        public MetasService(Context contexto)
+        {
+            _contexto = contexto;
+        }
 
-            public bool Existe(int id)
-            {
-                return _context.Metas.Any(a => a.MetasId == id);
-            }
+        public async Task<bool> Insertar(Metas metas)
+        {
+            _contexto.Metas.Add(metas);
+            return await _contexto.SaveChangesAsync() > 0;
+        }
 
-            public bool Insertar(Metas metas)
-            {
-                if (metas != null)
-                {
-                    _context.Metas.Add(metas);
-                    return _context.SaveChanges() > 0;
-                }
-                return false;
-            }
+        public async Task<bool> Modificar(Metas metas)
+        {
+            var a = await _contexto.Metas.FindAsync(metas.MetasId);
+            _contexto.Entry(a!).State = EntityState.Detached;
+            _contexto.Entry(metas).State = EntityState.Modified;
+            return await _contexto.SaveChangesAsync() > 0;
+        }
 
-            public bool Modificar(Metas metas)
-            {
-                if (metas != null)
-                {
-                    _context.Entry(metas).State = EntityState.Modified;
-                    return _context.SaveChanges() > 0;
-                }
-                return false;
-            }
+        public async Task<bool> Existe(int metaId)
+        {
+            return await _contexto.Metas
+                .AnyAsync(a => a.MetasId == metaId);
+        }
 
-            public bool Guardar(Metas metas)
-            {
-                if (Existe(metas.MetasId))
-                    return Modificar(metas);
-                else
-                    return Insertar(metas);
-            }
+        public async Task<bool> Guardar(Metas metas)
+        {
+            if (!await Existe(metas.MetasId))
+                return await Insertar(metas);
+            else
+                return await Modificar(metas);
+        }
 
-            public bool Eliminar(Metas metas)
-            {
-                _context.Entry(metas).State = EntityState.Deleted;
-                return _context.SaveChanges() > 0;
-            }
+        public async Task<bool> Eliminar(Metas metas)
+        {
+            var cantidad = await _contexto.Metas
+                 .Where(a => a.MetasId == metas.MetasId)
+                 .ExecuteDeleteAsync();
+            return cantidad > 0;
+        }
 
-            public Metas? Buscar(int id)
-            {
-                return _context.Metas.AsNoTracking().Where(a => a.MetasId == id).SingleOrDefault();
-            }
 
-            public List<Metas> GetList(Expression<Func<Metas, bool>> criterio)
-            {
-                return _context.Metas.AsNoTracking().Where(criterio).ToList();
-            }
+        public async Task<Metas?> Buscar(int metaId)
+        {
+            return await _contexto.Metas
+                .Where(a => a.MetasId == metaId)
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+        }
+
+        public List<Metas> Listar(Expression<Func<Metas, bool>> criterio)
+        {
+            return _contexto.Metas
+                .Where(criterio)
+                .AsNoTracking()
+                .ToList();
         }
     }
+}
 
 
