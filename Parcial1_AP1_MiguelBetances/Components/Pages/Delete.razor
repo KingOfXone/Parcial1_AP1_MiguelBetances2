@@ -1,0 +1,61 @@
+﻿@page "/Delete"
+@page "/Delete/{MetaId:int}"
+@inject MetasService metasService
+@inject NavigationManager navigationManager
+@inject IJSRuntime jsRuntime
+@rendermode InteractiveServer
+
+<h3>Eliminar Metas</h3>
+
+@if (meta != null)
+{
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Detalles de Metas</h5>
+            <dl class="row">
+                <dt class="col-sm-3">MetaId:</dt>
+                <dd class="col-sm-9">@meta.Result?.MetasId</dd>
+
+                <dt class="col-sm-3">Fecha:</dt>
+                <dd class="col-sm-9">@meta.Result?.Fecha</dd>
+
+                <dt class="col-sm-3">Descripci&oacute;n:</dt>
+                <dd class="col-sm-9">@meta.Result?.Descripcion</dd>
+
+                <dt class="col-sm-3">Monto:</dt>
+                <dd class="col-sm-9">@meta.Result?.Monto</dd>
+            </dl>
+            <button type="button" class="btn btn-danger" @onclick="Eliminar">Eliminar</button>
+            <a href="/detail" class="btn btn-link">Volver al detalle</a>
+
+        </div>
+
+    </div>
+}
+else
+{
+    <p>No se encontró la meta</p>
+}
+
+@code {
+    [Parameter]
+    public int MetaId { get; set; }
+    public Task<Metas> meta { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        meta = metasService.Buscar(MetaId);
+        await meta;
+    }
+
+    public async Task Eliminar()
+    {
+        var meta = await this.meta;
+        if (meta != null)
+        {
+            var eliminado = metasService.Eliminar(meta);
+            navigationManager.NavigateTo("/Detail");
+        }
+
+    }
+}
